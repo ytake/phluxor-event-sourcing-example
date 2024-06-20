@@ -53,7 +53,8 @@
     "mezzio/mezzio-fastroute": "^3.11.0",
     "mezzio/mezzio-helpers": "^5.7",
     "mezzio/mezzio-swoole": "^4.9",
-    "phluxor/phluxor": "@dev"
+    "phluxor/phluxor": "@dev",
+    "ext-swoole": "^5.0"
   },
   "require-dev": {
     "laminas/laminas-coding-standard": "~2.5.0",
