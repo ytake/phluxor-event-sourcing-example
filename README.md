@@ -32,8 +32,7 @@ graph LR
 ```
 
 
-場合によってはTicket SellerからBoxOfficeを経由せずにRootに直接メッセージを送ることもあり、  
-Ticket Sellerアクターはイベントごとに存在します。
+場合によってはTicket SellerからBoxOfficeを経由せずにRootに直接メッセージを送ることもあります。  
 
 ## boot application
 
