@@ -16,7 +16,6 @@ use App\Message\GetEvent;
 use App\Message\GetEvents;
 use Phluxor\ActorSystem\Context\ContextInterface;
 use Phluxor\ActorSystem\Exception\NameExistsException;
-use Phluxor\ActorSystem\Exception\SpawnErrorException;
 use Phluxor\ActorSystem\Message\ActorInterface;
 use Phluxor\ActorSystem\Props;
 use Swoole\Coroutine\WaitGroup;
@@ -31,17 +30,17 @@ class BoxOffice implements ActorInterface
         $msg = $context->message();
         switch (true) {
             case $msg instanceof EventDescription:
-                try {
-                    $result = $context->spawnNamed(
-                        Props::fromProducer(fn() => new TicketSeller()),
-                        $msg->name
-                    );
-                    $context->send($result->getRef(), new Add($msg->name, $msg->tickets));
-                    $context->respond(new EventCreated($msg->name, $msg->tickets));
-                } catch (SpawnErrorException $e) {
+                $result = $context->spawnNamed(
+                    Props::fromProducer(fn() => new TicketSeller()),
+                    $msg->name
+                );
+                if ($result->isError() instanceof NameExistsException) {
                     // アクターが生成済みの場合は生成済みであることを通知します
                     $context->respond(new EventExists());
+                    break;
                 }
+                $context->send($result->getRef(), new Add($msg->name, $msg->tickets));
+                $context->respond(new EventCreated($msg->name, $msg->tickets));
                 break;
             case $msg instanceof GetEvents:
                 $context->send($context->sender(), $this->fetchEvents($context));
