@@ -26,7 +26,7 @@ class TicketSeller implements ActorInterface
                 // actorの状態を変更します
                 $this->name = $msg->name;
                 $this->tickets = $msg->tickets;
-                $this->id = $context->self()?->protobufPid()->getId();
+                $this->id = (string) $context->self();
                 $context->send($msg->replyTo, new EventCreated($msg->name, $msg->tickets));
                 break;
             case $msg instanceof GetEvent:

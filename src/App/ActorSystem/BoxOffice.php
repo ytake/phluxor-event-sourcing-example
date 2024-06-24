@@ -59,9 +59,7 @@ class BoxOffice implements ActorInterface
                 break;
             case $msg instanceof CancelEvent:
                 foreach ($context->children() as $child) {
-                    if (
-                        (string)$child === sprintf("%s/%s", $context->self(), $msg->name)
-                    ) {
+                    if ((string)$child === sprintf("%s/%s", $context->self(), $msg->name)) {
                         $context->requestWithCustomSender($child, new Cancel(), $context->sender());
                         return;
                     }
