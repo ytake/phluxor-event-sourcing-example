@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ActorSystem;
 
+use App\Event\EventCreated;
 use App\Message\Add;
 use App\Message\Cancel;
 use App\Message\Event;
@@ -15,7 +16,7 @@ class TicketSeller implements ActorInterface
 {
     private int $tickets = 0;
     private string $name = '';
-    private string $id   = '';
+    private string $id = '';
 
     public function receive(ContextInterface $context): void
     {
@@ -23,9 +24,10 @@ class TicketSeller implements ActorInterface
         switch (true) {
             case $msg instanceof Add:
                 // actorの状態を変更します
-                $this->name    = $msg->name;
+                $this->name = $msg->name;
                 $this->tickets = $msg->tickets;
-                $this->id      = $context->self()?->protobufPid()->getId();
+                $this->id = $context->self()?->protobufPid()->getId();
+                $context->send($msg->replyTo, new EventCreated($msg->name, $msg->tickets));
                 break;
             case $msg instanceof GetEvent:
                 $context->requestWithCustomSender(

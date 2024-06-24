@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\ActorSystem;
 
-use App\Event\EventCreated;
 use App\Message\Add;
 use App\Message\Cancel;
 use App\Message\CancelEvent;
@@ -39,8 +38,7 @@ class BoxOffice implements ActorInterface
                     $context->respond(new EventExists());
                     break;
                 }
-                $context->send($result->getRef(), new Add($msg->name, $msg->tickets));
-                $context->respond(new EventCreated($msg->name, $msg->tickets));
+                $context->send($result->getRef(), new Add($msg->name, $msg->tickets, $context->sender()));
                 break;
             case $msg instanceof GetEvents:
                 $context->send($context->sender(), $this->fetchEvents($context));
@@ -50,29 +48,19 @@ class BoxOffice implements ActorInterface
                 // 送信先をエンドポイントに対応しているアクターに戻すよう指示している
                 $match = false;
                 foreach ($context->children() as $child) {
-                    if (
-                        $child->protobufPid()->getId() === sprintf(
-                            "%s/%s",
-                            $context->self()->protobufPid()->getId(),
-                            $msg->name
-                        )
-                    ) {
+                    if ((string)$child === sprintf("%s/%s", $context->self(), $msg->name)) {
                         $match = true;
                         $context->requestWithCustomSender($child, new GetEvent(), $context->sender());
                     }
                 }
-                if (! $match) {
+                if (!$match) {
                     $context->respond(new EventNotFound());
                 }
                 break;
             case $msg instanceof CancelEvent:
                 foreach ($context->children() as $child) {
                     if (
-                        $child->protobufPid()->getId() === sprintf(
-                            "%s/%s",
-                            $context->self()->protobufPid()->getId(),
-                            $msg->name
-                        )
+                        (string)$child === sprintf("%s/%s", $context->self(), $msg->name)
                     ) {
                         $context->requestWithCustomSender($child, new Cancel(), $context->sender());
                         return;
@@ -84,12 +72,12 @@ class BoxOffice implements ActorInterface
 
     private function fetchEvents(ContextInterface $context): array
     {
-        $wg     = new WaitGroup();
+        $wg = new WaitGroup();
         $events = [];
         foreach ($context->children() as $child) {
             $wg->add();
             $future = $context->requestFuture($child, new GetEvent(), 2000);
-            $fr     = $future->result();
+            $fr = $future->result();
             if ($fr->error() !== null) {
                 $wg->done();
                 continue;
